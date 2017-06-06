@@ -1,0 +1,103 @@
+
+
+像素
+
+像素其实分为两种，分别是物理像素和CSS像素
+
+物理像素（设备像素）
+物理像素，顾名思义，显示屏是由一个个物理像素点组成的，通过控制每个像素点的颜色，使屏幕显示出不同的图像，屏幕从工厂出来那天起，它上面的物理像素点就固定不变了，单位pt。
+通常我们看一些电子设备的参数，比如分辨率用的就是物理像素。它配合屏幕尺寸（注意：屏幕尺寸通常是说屏幕的对角线长度），可以计算出PPI（每英寸像素取值），即每一英寸物理像素数量。PPI越高，说明屏幕能提供更多细节。
+ppi计算公式
+CSS像素
+CSS和js使用的抽象单位，浏览器内的一切长度都是以CSS像素为单位的，CSS像素的单位是px。
+物理像素和CSS像素之间的关系(dppx，DPR)
+在非高清屏及未缩放的状态下，一个CSS像素等于一个物理像素，而在一些PPI非常高的屏幕（例如苹果的视网膜屏幕）上，如果还让一个CSS像素等于一个物理像素，就会导致网页上的元素变得非常小，因此高PPI屏下，通常一个CSS像素等于两个甚至三个物理像素（由浏览器厂商决定，不同浏览器设定的值可能不同）。如果一个CSS像素占用n个物理像素，那么我们就说此时的dppx(dots per px)为n。
+所以，我们可以用dppx描述物理像素和CSS像素之间的关系。dppx除了和PPI有关，也和当前缩放状态有关，举个例子，在非高清屏下，如果没缩放，一个CSS像素占用一个物理像素，此时是1dppx，但如果将页面放大到200%，此时一个CSS像素等于两个物理像素，即2dppx。
+DPR（设备像素比，devicePixelRatio）描述的是未缩放状态下，物理像素和CSS像素的初始比例关系，计算方法如下图。
+DPR计算公式
+DPR由浏览器厂商决定，我们无法修改，但可以通过window.devicePixelRatio读取DPR。
+可能有人疑问DPR和dppx到底啥关系，我们可以认为DPR描述的是未缩放状态，而dppx可以描述任意时刻的状态，未缩放状态下的dppx和DPR相等，当有缩放操作时，此时的物理像素和CSS像素的比例关系就只能用dppx描述了。
+视口（viewport）
+
+视口也叫作初始包含块，之所以叫这个名字，是因为它包含了元素，它的宽度是所有CSS百分比宽度推算的根源。
+在桌面浏览器，视口的宽度等同于浏览器窗口的宽度，高度即为浏览器窗口的高度。但移动端就有点复杂了，移动端的视口分为布局视口和视觉视口。
+
+布局视口（layout viewport）
+说布局视口之前，我们先说一下桌面端的页面放到移动端浏览器后出现的问题：由于早期的页面很多采用固定宽度的布局，导致放在移动端的小窗口下出现横向的滚动条，不便于用户查看，所以浏览器厂商研究出了布局视口。布局视口的宽度一般在768px~1024px（由浏览器厂商设置），常见宽度980px，虽然设置了很大的宽度，但在没有手动设置宽度的情况下，布局视口仍会容纳在一屏里（说白了，就是把980px的东西装在320px的屏幕里），这样，浏览器会避免出现横向滚动条。
+
+设置布局视口宽度：<meta name="viewport" content="width=640">
+获取布局视口宽度：document.documentElement.clientWidth
+布局视口除了和meta设置的width有关，还和scale有关，scale后面会说。
+视觉视口（visual viewport）
+用户正在看到的网页的区域，大小是屏幕中CSS像素的数量。
+
+获取视口宽度：window.innerWidth/Height
+初始状态下，一般视觉视口会等于布局视口。
+理想视口
+当布局视口的宽度达到理想状态时，就是理想视口，理想视口中的页面有最理想的宽度，用户进入页面不用缩放。
+
+实现方法：<meta name="viewport" content="width=device-width">（即设置布局视口宽度为设备宽度）
+缩放（scale）
+
+原理：可以理解为修改dppx，举个例子，假设一屏幕DPR为2，即1px对应2pt，如果这个时候，我们设置scale=0.5，那么dppx就会从2变成1，即1px对应1pt。所以，通过缩放我们可以调整自己所能控制的最小物理像素粒度。
+缩放会影响布局视口的大小，因为浏览器会尽量让布局视口铺满屏幕，所以当我们设置scale=0.5时，布局视口的宽度会自动变为原来的两倍。
+具体如下图所示。
+选择的移动调试设备
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <script>
+        console.log(document.documentElement.clientWidth);   //结果为375
+    </script>
+    <meta name="viewport" content="width=device-width,initial-scale=0.5">
+    <script>
+        console.log(document.documentElement.clientWidth);   //结果为750
+    </script>
+可能有人会问，scale的初始值是多少？其实这取决于viewport的宽度，因为浏览器会尽量让布局视口铺满全屏，所以浏览器会根据布局视口的大小动态调整scale的初始值大小，从而使布局视口铺满全屏。
+使用缩放的好处：对于DPR为2或更高的屏幕，如果不做缩放操作，我们所能控制的最小物理像素粒度是2pt或更多物理像素，这样带来了两个问题。
+
+如果设计图上某个边框标识的大小是1px,那说明设计师想让这个边框在任何屏幕上都是1像素，在普通屏幕上，不会有问题，但在retina这种高清屏上，当我们用1px修饰border时，实际上会有2pt渲染为border，导致border看上去比普通屏的border宽。
+
+<style>
+#log {
+border: 1px solid black;
+}
+</style>
+<div id="log"></div>
+scale=0.5
+
+scale=1.0
+
+对于高清屏，如果我们控制像素的粒度还是2pt或3pt，实际上我们并没有充分利用高清屏展现细节的能力。
+解决这两个问题的方法就是缩放，我们把scale设置为1/dpr。
+
+meta.setAttribute('content', 'initial-scale=' + 1/dpr + ', maximum-scale=' + 1/dpr + ', minimum-scale=' + 1/dpr + ', user-scalable=no');
+这样1px就对应1pt，我们就可以解决1px border问题和图片的高清问题了。
+
+适配方案
+
+固定高度，宽度自适应
+即垂直方向使用固定大小，水平方向使用百分比，flex。
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+适合场景：比较适合列表式的结构。
+固定宽度，viewport缩放
+开发页面时完全按照和设计图1:1的比例开发，设计图，页面，视口宽度使用同一个宽度，单位使用px即可，由于浏览器会尽量将布局视口铺满全屏，所以浏览器会自动帮助我们缩放。举个例子，假设设计图是640px宽，那我们这样设置。
+
+<meta name="viewport" content="width=640">
+这个时候会发现，浏览器会帮助我们将页面铺满全屏，而且这是绝对的等比例缩放。图片、文字等等所有元素都被缩放在手机屏幕中。
+rem做宽度，viewport缩放
+根据屏幕宽度设定rem值，需要适配的元素都使用rem为单位，不需要适配的元素还是使用 px 为单位。
+总共分两步：
+
+动态设置font-size
+
+document.getElementsByTagName('html')[0].style.fontSize = window.innerWidth / 10 + 'px';
+缩放viewport
+
+meta.setAttribute('content', 'initial-scale=' + 1/dpr + ', maximum-scale=' + 1/dpr + ', minimum-scale=' + 1/dpr + ', user-scalable=no');
+第二步是对页面适配的优化，修改scale是为了解决前面说到的1px border问题。
+淘宝的Flexible使用的就是这种方案，而且它加了data-dpr属性，这样我们就可以根据不同的DPR设置不同的样式。
+
+方案总结
+
+方案一比较适合列表这种比较固定的结构，方案二适合的场景比较多，而且实现简单，但需要注意它会将页面的所有元素都缩放，方案三适合的场景是页面内有些元素需要适配，有些元素不需要适配。总体来讲，方案二和方案三是比较常用的方式。
